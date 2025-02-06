@@ -3,10 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>goldfish4</title>
+    <title>ゲーム開始</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 50px;
+        }
+        #gameArea {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background-color: lightblue;
+        }
+        button {
+            font-size: 20px;
+            padding: 15px 30px;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
-    <h1>goldfish4</h1>
-    <button onclick="alert('ゲーム開始！')">ゲーム開始</button>
+    <h1>ゲームを開始しよう！</h1>
+    <button onclick="startGame()">ゲーム開始</button>
+
+    <div id="gameArea">
+        <h2>ゲームが始まりました！</h2>
+        <p>ここにゲーム内容が表示されます。</p>
+    </div>
+
+    <script>
+        function startGame() {
+            alert('ゲーム開始！');
+            // ゲームエリアを表示する
+            document.getElementById('gameArea').style.display = 'block';
+        }
+    </script>
 </body>
 </html>
