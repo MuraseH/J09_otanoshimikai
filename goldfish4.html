@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>金魚シューティングゲーム</title>
+    <style>
+        body { text-align: center; background-color: #87CEEB; }
+        canvas { background-color: #FFD700; cursor: crosshair; }
+        #restartButton { display: none; padding: 10px 20px; font-size: 20px; background-color: #008CBA; color: white; border: none; cursor: pointer; }
+        #restartButton:hover { background-color: #006F8C; }
+    </style>
+</head>
+<body>
+    <h1>SAD団シューティングゲーム</h1>
+    <canvas id="gameCanvas" width="800" height="400"></canvas>
+    <audio id="hitSound" src="hit.mp3"></audio>
+    <audio id="shootSound" src="shoot.mp3"></audio>
+    <audio id="evadeSound" src="evade.mp3"></audio>
+    <audio id="bgm" src="bgm.mp3" loop="true"></audio> <!-- BGMの追加 -->
+    <button id="restartButton">再スタート</button>
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        const hitSound = document.getElementById("hitSound");
+        const shootSound = document.getElementById("shootSound");
+        const evadeSound = document.getElementById("evadeSound");
+        const bgm = document.getElementById("bgm"); // BGMの要素
+        const restartButton = document.getElementById("restartButton");
+
+        let goldfish, bullets, explosions, evades, score, timeLeft, gameOver, lastUpdateTime, scoreFish;
+
+        function resetGame() {
+            goldfish = { x: Math.random() * 750, y: Math.random() * 350, size: 30 };
+            bullets = [];
+            explosions = [];
+            evades = [];
+            score = 0;
+            timeLeft = 15;
+            gameOver = false;
+            lastUpdateTime = Date.now();
+            scoreFish = [];
+
+            restartButton.style.display = "none"; // 再スタートボタンを非表示にする
+            update(); // ゲームを開始する
+        }
+
+        const goldfishImage = new Image();
+        goldfishImage.src = "goldfish.png";
+
+        const scoreFishImage = new Image();
+        scoreFishImage.src = "scoreFish.png";
+
+        const explosionImage = new Image();
+        explosionImage.src = "explosion.png";
+
+        const evadeEffectImage = new Image();
+        evadeEffectImage.src = "evade_effect.jpg";
+
+        function drawGoldfish() {
+            if (goldfishImage.complete) {
+                ctx.drawImage(goldfishImage, goldfish.x - 20, goldfish.y - 20, 40, 40);
+            }
+        }
+
+        function drawBullets() {
+            ctx.fillStyle = "blue";
+            bullets.forEach(bullet => {
+                ctx.fillRect(bullet.x, bullet.y, 5, 10);
+            });
+        }
+
+        function moveBullets() {
+            bullets.forEach(bullet => bullet.y -= 5);
+            bullets = bullets.filter(bullet => bullet.y > 0);
+        }
+
+        function detectCollision() {
+            bullets.forEach((bullet, index) => {
+                const dx = bullet.x - goldfish.x;
+                const dy = bullet.y - goldfish.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance < goldfish.size) {
+                    if (Math.random() > 0.3) {
+                        score++;
+                        bullets.splice(index, 1);
+                        explosions.push({ x: goldfish.x - 20, y: goldfish.y - 20, time: 30 });
+                        hitSound.play();
+                        goldfish.x = Math.random() * 750;
+                        goldfish.y = Math.random() * 350;
+                        scoreFish.push({ x: Math.random() * 750, y: -30, time: 100 });
+                    } else {
+                        const evadeX = goldfish.x + (Math.random() * 100 - 50);
+                        const evadeY = goldfish.y + (Math.random() * 100 - 50);
+                        evades.push({ x: goldfish.x - 20, y: goldfish.y - 20, time: 12 });
+                        goldfish.x = evadeX;
+                        goldfish.y = evadeY;
+                        evadeSound.play();
+                    }
+                }
+            });
+        }
+
+        function drawExplosions() {
+            explosions.forEach((explosion, index) => {
+                if (explosionImage.complete) {
+                    ctx.drawImage(explosionImage, explosion.x, explosion.y, 40, 40);
+                }
+                explosion.time--;
+                if (explosion.time <= 0) {
+                    explosions.splice(index, 1);
+                }
+            });
+        }
+
+        function drawEvades() {
+            evades.forEach((evade, index) => {
+                if (evadeEffectImage.complete) {
+                    ctx.drawImage(evadeEffectImage, evade.x, evade.y, 40, 40);
+                }
+                evade.time--;
+                if (evade.time <= 0) {
+                    evades.splice(index, 1);
+                }
+            });
+        }
+
+        function drawScore() {
+            ctx.fillStyle = "black";
+            ctx.font = "20px Arial";
+            ctx.fillText("スコア: " + score, 10, 30);
+            ctx.fillText("時間: " + timeLeft.toFixed(1) + "秒", 10, 50);
+        }
+
+        function drawScoreFish() {
+            scoreFish.forEach((fish, index) => {
+                if (scoreFishImage.complete) {
+                    ctx.drawImage(scoreFishImage, fish.x - 20, fish.y, 40, 40);
+                }
+                fish.y += 2;
+                fish.time--;
+                if (fish.time <= 0) {
+                    scoreFish.splice(index, 1);
+                }
+            });
+        }
+
+        function update() {
+            if (gameOver) return;
+
+            const currentTime = Date.now();
+            const deltaTime = (currentTime - lastUpdateTime) / 1000;
+            lastUpdateTime = currentTime;
+
+            timeLeft -= deltaTime;
+
+            if (timeLeft <= 0) {
+                gameOver = true;
+                alert('ゲーム終了！スコア: ' + score);
+                restartButton.style.display = "block";
+                return;
+            }
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawGoldfish();
+            drawBullets();
+            moveBullets();
+            detectCollision();
+            drawExplosions();
+            drawEvades();
+            drawScore();
+            drawScoreFish();
+            requestAnimationFrame(update);
+        }
+
+        canvas.addEventListener("click", (event) => {
+            bullets.push({ x: event.clientX - canvas.offsetLeft, y: event.clientY - canvas.offsetTop });
+            shootSound.play();
+
+            // 初めてクリックされたときにBGMを再生
+            if (bgm.paused) {  // もしBGMが再生されていなければ
+                bgm.play().catch(function(error) {
+                    console.log("BGMの再生に失敗しました: ", error);
+                });
+            }
+        });
+
+        goldfishImage.onload = () => {
+            resetGame();
+        };
+
+        restartButton.addEventListener("click", () => {
+            resetGame();
+        });
+    </script>
+</body>
+</html>
